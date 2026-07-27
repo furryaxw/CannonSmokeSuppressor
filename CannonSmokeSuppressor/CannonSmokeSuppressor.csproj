@@ -4,8 +4,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>CannonSmokeSuppressor</AssemblyName>
     <RootNamespace>CannonSmokeSuppressor</RootNamespace>
-    <Version>1.2.2</Version>
-    <Description>Limits accumulated Sprocket cannon muzzle-smoke effects.</Description>
+    <Version>2.0.0</Version>
+    <Description>Suppresses persistent engine and muzzle smoke layers while retaining normal smoke.</Description>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/furryaxw/CannonSmokeSuppressor</RepositoryUrl>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -14,6 +14,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\MelonLoader\net6\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Il2CppInterop.Runtime">
       <HintPath>..\..\..\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
     </Reference>
@@ -26,13 +30,39 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.VFXModule">
+      <HintPath>..\..\..\MelonLoader\Il2CppAssemblies\UnityEngine.VFXModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Il2CppSprocket.Vehicles">
       <HintPath>..\..\..\MelonLoader\Il2CppAssemblies\Il2CppSprocket.Vehicles.dll</HintPath>
     </Reference>
+    <Reference Include="Il2CppSprocket.Exhausts">
+      <HintPath>..\..\..\MelonLoader\Il2CppAssemblies\Il2CppSprocket.Exhausts.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppSprocket.EffectsFramework">
+      <HintPath>..\..\..\MelonLoader\Il2CppAssemblies\Il2CppSprocket.EffectsFramework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppSprocket.Powertrains">
+      <HintPath>..\..\..\MelonLoader\Il2CppAssemblies\Il2CppSprocket.Powertrains.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppSprocket.WeaponFramework">
+      <HintPath>..\..\..\MelonLoader\Il2CppAssemblies\Il2CppSprocket.WeaponFramework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppSprocket.Vehicles.Weapons">
+      <HintPath>..\..\..\MelonLoader\Il2CppAssemblies\Il2CppSprocket.Vehicles.Weapons.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy /Y &quot;$(TargetPath)&quot; &quot;G:\Sprocket\Mods\&quot;" />
+  <Target Name="PostBuild"
+          AfterTargets="PostBuildEvent"
+          Condition="'$(SkipModDeploy)' != 'true'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="G:\Sprocket\Mods" />
   </Target>
 
 </Project>
