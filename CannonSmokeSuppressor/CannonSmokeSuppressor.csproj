@@ -4,7 +4,9 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>CannonSmokeSuppressor</AssemblyName>
     <RootNamespace>CannonSmokeSuppressor</RootNamespace>
-    <Version>2.5.0</Version>
+    <Version>2.5.1</Version>
+    <AssemblyVersion>2.5.1.0</AssemblyVersion>
+    <FileVersion>2.5.1.0</FileVersion>
     <Description>Suppresses persistent engine and muzzle smoke accumulation while retaining normal smoke.</Description>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/furryaxw/CannonSmokeSuppressor</RepositoryUrl>

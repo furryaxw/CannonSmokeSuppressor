@@ -10,7 +10,7 @@ using MuzzleFlashEffect = Il2CppSprocket.Vehicles.Fires.MuzzleFlashEffect;
 [assembly: MelonInfo(
     typeof(CannonSmokeSuppressor.CannonSmokeSuppressorMain),
     "Muzzle Smoke Suppressor",
-    "2.5.0",
+    "2.5.1",
     "furryAxw")]
 [assembly: MelonGame("HD", "Sprocket")]
 

@@ -10,5 +10,7 @@
              Link="SmokeAccumulationOutputMap.cs" />
     <Compile Include="..\..\CannonSmokeSuppressor\SmokeNativeExpressionMap.cs"
              Link="SmokeNativeExpressionMap.cs" />
+    <Compile Include="..\..\CannonSmokeSuppressor\NativeBuildFingerprint.cs"
+             Link="NativeBuildFingerprint.cs" />
   </ItemGroup>
 </Project>

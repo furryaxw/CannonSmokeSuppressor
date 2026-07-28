@@ -2,20 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using UnityEngine.VFX;
 
 namespace CannonSmokeSuppressor
 {
     internal static class VfxNativeExpressionOverride
     {
-        private const long ExpectedUnityPlayerLength = 31_006_120;
-        private const string ExpectedUnityPlayerSha256 =
-            "43FB0AEA1B80C74963DAE88EC7FC1C3C1993D893CE94D12972000FCC9B653AD1";
-        private const long ExpectedGameAssemblyLength = 62_211_072;
-        private const string ExpectedGameAssemblySha256 =
-            "948C5FB4D580034DE753A784B6AD11E7896C61CA998E3E4F2E7524BEC69BEF02";
-
         // UnityEngine.Object.m_CachedPtr in the current IL2CPP metadata.
         private const int CachedNativeObjectOffset = 0x10;
 
@@ -48,20 +40,18 @@ namespace CannonSmokeSuppressor
                     gameRoot,
                     "GameAssembly.dll");
 
-                if (!TryMatchFile(
+                if (!NativeBuildFingerprint.TryMatchUnityPlayer(
                         unityPlayerPath,
-                        ExpectedUnityPlayerLength,
-                        ExpectedUnityPlayerSha256,
+                        out NativeFileFingerprint unityPlayerBuild,
                         out string unityPlayerResult))
                 {
                     result = $"UnityPlayer mismatch: {unityPlayerResult}";
                     return false;
                 }
 
-                if (!TryMatchFile(
+                if (!NativeBuildFingerprint.TryMatchGameAssembly(
                         gameAssemblyPath,
-                        ExpectedGameAssemblyLength,
-                        ExpectedGameAssemblySha256,
+                        out NativeFileFingerprint gameAssemblyBuild,
                         out string gameAssemblyResult))
                 {
                     result = $"GameAssembly mismatch: {gameAssemblyResult}";
@@ -69,8 +59,10 @@ namespace CannonSmokeSuppressor
                 }
 
                 result =
-                    $"UnityPlayer={ExpectedUnityPlayerSha256}," +
-                    $"GameAssembly={ExpectedGameAssemblySha256}," +
+                    $"UnityPlayer={unityPlayerBuild.Name}/" +
+                    $"{unityPlayerBuild.Sha256}," +
+                    $"GameAssembly={gameAssemblyBuild.Name}/" +
+                    $"{gameAssemblyBuild.Sha256}," +
                     $"cachedPtrOffset=0x{CachedNativeObjectOffset:X}," +
                     $"valueBufferOffset=0x{ExpressionValueBufferOffset:X}";
                 return true;
@@ -404,45 +396,6 @@ namespace CannonSmokeSuppressor
                 return false;
             }
 
-            return true;
-        }
-
-        private static bool TryMatchFile(
-            string path,
-            long expectedLength,
-            string expectedSha256,
-            out string result)
-        {
-            var file = new FileInfo(path);
-            if (!file.Exists)
-            {
-                result = $"missing path={path}";
-                return false;
-            }
-
-            if (file.Length != expectedLength)
-            {
-                result =
-                    $"length expected={expectedLength},actual={file.Length}";
-                return false;
-            }
-
-            using FileStream stream = File.OpenRead(path);
-            using SHA256 sha256 = SHA256.Create();
-            string actualSha256 = Convert.ToHexString(
-                sha256.ComputeHash(stream));
-            if (!string.Equals(
-                    actualSha256,
-                    expectedSha256,
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                result =
-                    $"sha256 expected={expectedSha256}," +
-                    $"actual={actualSha256}";
-                return false;
-            }
-
-            result = $"length={file.Length},sha256={actualSha256}";
             return true;
         }
 
