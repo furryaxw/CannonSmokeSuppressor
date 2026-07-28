@@ -4,14 +4,21 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>CannonSmokeSuppressor</AssemblyName>
     <RootNamespace>CannonSmokeSuppressor</RootNamespace>
-    <Version>2.0.0</Version>
-    <Description>Suppresses persistent engine and muzzle smoke layers while retaining normal smoke.</Description>
+    <Version>2.5.0</Version>
+    <Description>Suppresses persistent engine and muzzle smoke accumulation while retaining normal smoke.</Description>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/furryaxw/CannonSmokeSuppressor</RepositoryUrl>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Retain local reverse-engineering probes without compiling them into releases. -->
+    <Compile Remove="SmokeNativeSpawnerMap.cs" />
+    <Compile Remove="SmokeOutputCalibrationState.cs" />
+    <Compile Remove="VfxNativeSpawnerOverride.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="0Harmony">

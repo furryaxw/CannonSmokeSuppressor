@@ -8,5 +8,7 @@
   <ItemGroup>
     <Compile Include="..\..\CannonSmokeSuppressor\SmokeAccumulationOutputMap.cs"
              Link="SmokeAccumulationOutputMap.cs" />
+    <Compile Include="..\..\CannonSmokeSuppressor\SmokeNativeExpressionMap.cs"
+             Link="SmokeNativeExpressionMap.cs" />
   </ItemGroup>
 </Project>

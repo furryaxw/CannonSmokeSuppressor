@@ -8,24 +8,27 @@ using ExhaustEffect = Il2CppSprocket.Vehicles.Exhausts.ExhaustEffect;
 using MuzzleFlashEffect = Il2CppSprocket.Vehicles.Fires.MuzzleFlashEffect;
 
 [assembly: MelonInfo(
-    typeof(CannonSmokeSuppressor.SmokeAccumulationSuppressorMod),
-    "Smoke Accumulation Suppressor",
-    "2.0.0",
+    typeof(CannonSmokeSuppressor.CannonSmokeSuppressorMain),
+    "Muzzle Smoke Suppressor",
+    "2.5.0",
     "furryAxw")]
 [assembly: MelonGame("HD", "Sprocket")]
 
 namespace CannonSmokeSuppressor
 {
-    public sealed class SmokeAccumulationSuppressorMod : MelonMod
+    public sealed class CannonSmokeSuppressorMain : MelonMod
     {
         private const string DiagnosticPrefix =
-            "[DEBUG-smoke-accumulation-suppressor-2.0.0]";
-        private readonly HashSet<string> loggedOutputMappings =
-            new(StringComparer.Ordinal);
+            "[CannonSmokeSuppressor]";
         private readonly HashSet<string> loggedFailures =
             new(StringComparer.Ordinal);
+        private bool nativeWritesEnabled;
 
-        internal static SmokeAccumulationSuppressorMod? Instance { get; private set; }
+        internal static CannonSmokeSuppressorMain? Instance
+        {
+            get;
+            private set;
+        }
 
         public override void OnInitializeMelon()
         {
@@ -35,36 +38,79 @@ namespace CannonSmokeSuppressor
                     out int sampleCount))
             {
                 LoggerInstance.Msg(
-                    $"{DiagnosticPrefix} output-map passed samples={sampleCount}");
+                    $"{DiagnosticPrefix} output-map passed " +
+                    $"samples={sampleCount}," +
+                    "muzzleAccumulationMaterialConfirmed=false");
             }
             else
             {
                 LoggerInstance.Error(
-                    $"{DiagnosticPrefix} output-map failed samples={sampleCount}," +
-                    $"failure={failure}");
+                    $"{DiagnosticPrefix} output-map failed " +
+                    $"samples={sampleCount},failure={failure}");
             }
 
-            LoggerInstance.Msg(
-                $"{DiagnosticPrefix} enabled " +
-                "nativeOutputs=ExhaustSmoke/System-(5)," +
-                "MediumCannonFire/System-(14)," +
-                "normalSmokeRetained=true,scenePolling=false");
+            bool expressionMapPassed =
+                SmokeNativeExpressionMap.TryValidateCapturedEvidence(
+                    out failure,
+                    out sampleCount);
+            if (expressionMapPassed)
+            {
+                LoggerInstance.Msg(
+                    $"{DiagnosticPrefix} expression-map passed " +
+                    $"samples={sampleCount}," +
+                    "source=compiled-VisualEffectAsset");
+            }
+            else
+            {
+                LoggerInstance.Error(
+                    $"{DiagnosticPrefix} expression-map failed " +
+                    $"samples={sampleCount},failure={failure}");
+            }
+
+            bool nativeGuardPassed =
+                VfxNativeExpressionOverride.TryInitialize(
+                    out string nativeGuardResult);
+            nativeWritesEnabled =
+                expressionMapPassed && nativeGuardPassed;
+            if (nativeWritesEnabled)
+            {
+                LoggerInstance.Msg(
+                    $"{DiagnosticPrefix} native-guard passed " +
+                    nativeGuardResult);
+                LoggerInstance.Msg(
+                    $"{DiagnosticPrefix} enabled " +
+                    "engine=ExhaustSmoke/valueIndex-174/" +
+                    "System-(4)->System-(5)," +
+                    "muzzle=MediumCannonFire/System-(9)/Count/" +
+                    "expression-148/valueIndex-299-300/(7,7)->(0,0)," +
+                    "muzzleExpressions=valueIndex-289-and-294/unchanged," +
+                    "normalSmokeRetained=true," +
+                    "scenePolling=false");
+            }
+            else
+            {
+                LoggerInstance.Error(
+                    $"{DiagnosticPrefix} activation failed " +
+                    $"expressionMapPassed={expressionMapPassed}," +
+                    $"nativeGuardPassed={nativeGuardPassed}," +
+                    $"guard={nativeGuardResult},writesDisabled=true");
+            }
         }
 
         public override void OnDeinitializeMelon()
         {
-            Instance = null;
-            loggedOutputMappings.Clear();
+            nativeWritesEnabled = false;
             loggedFailures.Clear();
+            Instance = null;
         }
 
-        internal void SuppressAccumulationOutput(
+        internal void SuppressEngineExpression(
             Component effect,
             string category)
         {
             try
             {
-                if (effect == null)
+                if (!nativeWritesEnabled || effect == null)
                     return;
 
                 VisualEffect? visualEffect =
@@ -72,77 +118,83 @@ namespace CannonSmokeSuppressor
                 if (visualEffect == null || visualEffect.visualEffectAsset == null)
                     return;
 
-                Renderer? renderer = visualEffect.GetComponent<Renderer>();
-                if (renderer == null)
-                    return;
-
-                string assetName = visualEffect.visualEffectAsset.name ?? string.Empty;
-                var materials = renderer.sharedMaterials;
-                if (materials == null || materials.Length == 0)
-                    return;
-
-                bool changed = false;
-                for (int materialIndex = 0;
-                     materialIndex < materials.Length;
-                     materialIndex++)
+                if (!VfxNativeExpressionOverride.TryDisableMappedExpression(
+                        visualEffect,
+                        out _,
+                        out string failure))
                 {
-                    Material? material = materials[materialIndex];
-                    string materialName = material?.name ?? string.Empty;
-                    if (!SmokeAccumulationOutputMap.IsAccumulationOutput(
-                            assetName,
-                            materialName))
-                    {
-                        continue;
-                    }
-
-                    materials[materialIndex] = null;
-                    changed = true;
-                    string mappingKey = $"{assetName}|{materialName}";
-                    if (loggedOutputMappings.Add(mappingKey))
-                    {
-                        LoggerInstance.Msg(
-                            $"{DiagnosticPrefix} suppressed " +
-                            $"category={category},asset={assetName}," +
-                            $"materialIndex={materialIndex},material={materialName}," +
-                            "normalSmokeRetained=true");
-                    }
+                    LogFailure(category, failure);
                 }
-
-                if (changed)
-                    renderer.sharedMaterials = materials;
             }
             catch (Exception exception)
             {
-                string failureKey = $"{category}|{exception.GetType().FullName}";
-                if (loggedFailures.Add(failureKey))
+                LogFailure(category, exception.ToString());
+            }
+        }
+
+        internal void SuppressMuzzleCount(
+            Component effect,
+            string category)
+        {
+            try
+            {
+                if (!nativeWritesEnabled || effect == null)
+                    return;
+
+                VisualEffect? visualEffect =
+                    effect.GetComponentInChildren<VisualEffect>(true);
+                if (visualEffect == null || visualEffect.visualEffectAsset == null)
+                    return;
+
+                if (!VfxNativeExpressionOverride.TryZeroMappedFloat2Expression(
+                        visualEffect,
+                        out _,
+                        out string failure))
                 {
-                    LoggerInstance.Error(
-                        $"{DiagnosticPrefix} suppress-failed " +
-                        $"category={category},error={exception}");
+                    LogFailure(category, failure);
                 }
             }
+            catch (Exception exception)
+            {
+                LogFailure(category, exception.ToString());
+            }
+        }
+
+        private void LogFailure(string category, string failure)
+        {
+            string key = $"{category}|{failure}";
+            if (!loggedFailures.Add(key))
+                return;
+
+            LoggerInstance.Error(
+                $"{DiagnosticPrefix} failed " +
+                $"category={category},error={failure}");
         }
     }
 
     [HarmonyPatch(typeof(ExhaustEffect), nameof(ExhaustEffect.PlayEffect))]
-    internal static class ExhaustAccumulationSuppressionPatch
+    internal static class ExhaustNativeExpressionSuppressionPatch
     {
         [HarmonyPostfix]
         private static void Postfix(ExhaustEffect __instance)
         {
-            SmokeAccumulationSuppressorMod.Instance?
-                .SuppressAccumulationOutput(__instance, "engine-exhaust");
+            CannonSmokeSuppressorMain.Instance?
+                .SuppressEngineExpression(
+                    __instance,
+                    "engine-exhaust");
         }
     }
 
     [HarmonyPatch(typeof(MuzzleFlashEffect), nameof(MuzzleFlashEffect.Setup))]
-    internal static class MuzzleAccumulationSuppressionPatch
+    internal static class MuzzleNativeCountSuppressionPatch
     {
         [HarmonyPostfix]
         private static void Postfix(MuzzleFlashEffect __instance)
         {
-            SmokeAccumulationSuppressorMod.Instance?
-                .SuppressAccumulationOutput(__instance, "muzzle-flash");
+            CannonSmokeSuppressorMain.Instance?
+                .SuppressMuzzleCount(
+                    __instance,
+                    "muzzle-flash");
         }
     }
 }

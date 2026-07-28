@@ -24,9 +24,11 @@ namespace CannonSmokeSuppressor
                     "MediumCannonFire",
                     StringComparison.OrdinalIgnoreCase))
             {
-                return materialName.Contains(
-                    "/MediumCannonFire/System (14)/",
-                    StringComparison.OrdinalIgnoreCase);
+                // Runtime material mutations had no visual effect, and the
+                // valueIndex 289 probe suppressed several base smoke systems.
+                // No MediumCannonFire material is currently validated as an
+                // accumulation-only output.
+                return false;
             }
 
             return false;
@@ -53,7 +55,7 @@ namespace CannonSmokeSuppressor
                 new(
                     "MediumCannonFire",
                     "Hidden/VFX/MediumCannonFire/System (14)/Output Particle Octagon",
-                    true),
+                    false),
                 new(
                     "MediumCannonFire",
                     "Hidden/VFX/MediumCannonFire/System (1)/Output Particle Quad",

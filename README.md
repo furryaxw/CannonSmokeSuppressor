@@ -1,17 +1,21 @@
-# Smoke Accumulation Suppressor
+# CannonSmokeSuppressor
 
-适用于《Sprocket》的 MelonLoader 模组，只移除造成长期堆积的烟雾输出层。
+适用于《Sprocket》的 MelonLoader 模组。它只抑制会长期堆积的引擎和炮口烟，
+保留正常引擎尾烟、瞬时炮口烟、炮口焰、火花、冲击波、扰动、命中烟尘和车辆起火效果。
 
-## 屏蔽范围
+## 工作方式
 
-- `ExhaustSmoke/System (5)`：长期残留的引擎尾烟堆积层。
-- `MediumCannonFire/System (14)`：长期残留的炮口烟堆积层。
+- 引擎：在 `ExhaustEffect.PlayEffect` 后关闭已校准的 `ExhaustSmoke` 堆积表达式。
+- 炮口：在 `MuzzleFlashEffect.Setup` 后、原生 VFX 更新前，将
+  `MediumCannonFire/System (9)` 的独立发射 Count 设为零。
 
-正常引擎尾烟、瞬时炮口烟、炮口焰、火花、冲击波、扰动、命中烟尘和车辆
-起火效果都会保留。
+模组不修改游戏资源文件，也不持续扫描车辆或场景。原生内存布局受当前游戏二进制
+指纹保护；游戏更新导致布局变化时会停止写入并记录错误，而不会猜测新偏移。
 
-模组在原生特效初始化入口中只清空上述两个 VFX renderer material slot，
-不再持续扫描车辆或场景。
+## 安装
+
+1. 安装适用于《Sprocket》的 MelonLoader。
+2. 将 `CannonSmokeSuppressor.dll` 放入游戏的 `Mods` 目录。
 
 ## 构建
 
