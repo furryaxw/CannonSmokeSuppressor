@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using HarmonyLib;
 using MelonLoader;
 using UnityEngine;
@@ -10,9 +11,16 @@ using MuzzleFlashEffect = Il2CppSprocket.Vehicles.Fires.MuzzleFlashEffect;
 [assembly: MelonInfo(
     typeof(CannonSmokeSuppressor.CannonSmokeSuppressorMain),
     "Muzzle Smoke Suppressor",
-    "2.5.1",
+    "2.5.2",
     "furryAxw")]
 [assembly: MelonGame("HD", "Sprocket")]
+[assembly: AssemblyMetadata("Sprocket.Mod.Id", "furryaxw.cannon-smoke-suppressor")]
+[assembly: AssemblyMetadata("Sprocket.Mod.DisplayName", "Cannon Smoke Suppressor")]
+[assembly: AssemblyMetadata("Sprocket.Mod.Description", "Limits persistent engine and muzzle-smoke accumulation while preserving normal effects.")]
+[assembly: AssemblyMetadata("Sprocket.Mod.Authors", "furryAxw")]
+[assembly: AssemblyMetadata("Sprocket.Mod.Repository", "furryaxw/CannonSmokeSuppressor")]
+[assembly: AssemblyMetadata("Sprocket.Mod.Category", "visual")]
+[assembly: AssemblyMetadata("Sprocket.Mod.License", "GPL-3.0-only")]
 
 namespace CannonSmokeSuppressor
 {
